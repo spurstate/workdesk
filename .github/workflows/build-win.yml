@@ -24,6 +24,7 @@ jobs:
       - name: Build Windows
         run: npm run build:win
         env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           # To enable code signing, add these secrets and remove CSC_IDENTITY_AUTO_DISCOVERY:
           # CSC_LINK: ${{ secrets.WIN_CSC_LINK }}

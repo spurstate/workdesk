@@ -24,6 +24,7 @@ jobs:
       - name: Build macOS
         run: npm run build:mac
         env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           # To enable code signing + notarization, add these secrets and remove CSC_IDENTITY_AUTO_DISCOVERY:
           # CSC_LINK: ${{ secrets.CSC_LINK }}
