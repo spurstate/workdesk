@@ -1,0 +1,123 @@
+import { contextBridge, ipcRenderer } from "electron";
+import { IPC, STREAM, WORKSPACE_EVENTS, OUTPUT_EVENTS } from "../shared/ipc-channels";
+import type { WorkspaceFile, SessionInfo } from "../shared/types";
+
+// Expose typed API to renderer
+const api = {
+  // Config
+  config: {
+    getKeyStatus: (): Promise<boolean> =>
+      ipcRenderer.invoke(IPC.CONFIG_GET_STATUS),
+    setKey: (key: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.CONFIG_SET_KEY, key),
+    clearKey: (): Promise<void> => ipcRenderer.invoke(IPC.CONFIG_CLEAR_KEY),
+    getModel: (): Promise<string> =>
+      ipcRenderer.invoke(IPC.CONFIG_GET_MODEL),
+    setModel: (model: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.CONFIG_SET_MODEL, model),
+    getOutputPath: (): Promise<string | null> =>
+      ipcRenderer.invoke(IPC.CONFIG_GET_OUTPUT_PATH),
+    setOutputPath: (p: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.CONFIG_SET_OUTPUT_PATH, p),
+  },
+
+  // Output folder
+  output: {
+    selectFolder: (): Promise<string | null> =>
+      ipcRenderer.invoke(IPC.OUTPUT_SELECT_FOLDER),
+    checkCurriculum: (): Promise<{ exists: boolean; fileCount: number }> =>
+      ipcRenderer.invoke(IPC.OUTPUT_CHECK_CURRICULUM),
+    listFiles: (): Promise<WorkspaceFile[]> =>
+      ipcRenderer.invoke(IPC.OUTPUT_LIST_FILES),
+    onFilesChanged: (cb: (files: WorkspaceFile[]) => void): (() => void) => {
+      const handler = (_: unknown, files: WorkspaceFile[]) => cb(files);
+      ipcRenderer.on(OUTPUT_EVENTS.FILES_CHANGED, handler);
+      return () => ipcRenderer.removeListener(OUTPUT_EVENTS.FILES_CHANGED, handler);
+    },
+  },
+
+  // Workspace
+  workspace: {
+    select: (): Promise<string | null> =>
+      ipcRenderer.invoke(IPC.WORKSPACE_SELECT),
+    getCurrent: (): Promise<string | null> =>
+      ipcRenderer.invoke(IPC.WORKSPACE_GET_CURRENT),
+    listFiles: (): Promise<WorkspaceFile[]> =>
+      ipcRenderer.invoke(IPC.WORKSPACE_LIST_FILES),
+    readFile: (absolutePath: string): Promise<string> =>
+      ipcRenderer.invoke(IPC.WORKSPACE_READ_FILE, absolutePath),
+    onFilesChanged: (
+      cb: (files: WorkspaceFile[]) => void
+    ): (() => void) => {
+      const handler = (_: unknown, files: WorkspaceFile[]) => cb(files);
+      ipcRenderer.on(WORKSPACE_EVENTS.FILES_CHANGED, handler);
+      return () => ipcRenderer.removeListener(WORKSPACE_EVENTS.FILES_CHANGED, handler);
+    },
+    listContextFiles: (): Promise<WorkspaceFile[]> =>
+      ipcRenderer.invoke(IPC.WORKSPACE_LIST_CONTEXT_FILES),
+    onContextChanged: (cb: () => void): (() => void) => {
+      const handler = () => cb();
+      ipcRenderer.on(WORKSPACE_EVENTS.CONTEXT_CHANGED, handler);
+      return () => ipcRenderer.removeListener(WORKSPACE_EVENTS.CONTEXT_CHANGED, handler);
+    },
+  },
+
+  // Context wizard
+  context: {
+    writeFile: (relativePath: string, content: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.CONTEXT_WRITE_FILE, relativePath, content),
+  },
+
+  // Commands
+  command: {
+    buildPrompt: (commandName: string, args: string): Promise<string> =>
+      ipcRenderer.invoke(IPC.COMMAND_BUILD_PROMPT, commandName, args),
+  },
+
+  // Sessions
+  session: {
+    list: (): Promise<SessionInfo[]> => ipcRenderer.invoke(IPC.SESSION_LIST),
+  },
+
+  // Chat / streaming
+  chat: {
+    send: (message: string, sessionId?: string): Promise<string> =>
+      ipcRenderer.invoke(IPC.CHAT_SEND, { message, sessionId }),
+    abort: (): Promise<void> => ipcRenderer.invoke(IPC.CHAT_ABORT),
+
+    onToken: (cb: (token: string) => void): (() => void) => {
+      const handler = (_: unknown, token: string) => cb(token);
+      ipcRenderer.on(STREAM.TOKEN, handler);
+      return () => ipcRenderer.removeListener(STREAM.TOKEN, handler);
+    },
+    onToolStart: (cb: (toolName: string) => void): (() => void) => {
+      const handler = (_: unknown, toolName: string) => cb(toolName);
+      ipcRenderer.on(STREAM.TOOL_START, handler);
+      return () => ipcRenderer.removeListener(STREAM.TOOL_START, handler);
+    },
+    onToolEnd: (cb: () => void): (() => void) => {
+      const handler = () => cb();
+      ipcRenderer.on(STREAM.TOOL_END, handler);
+      return () => ipcRenderer.removeListener(STREAM.TOOL_END, handler);
+    },
+    onAssistantComplete: (cb: (text: string) => void): (() => void) => {
+      const handler = (_: unknown, text: string) => cb(text);
+      ipcRenderer.on(STREAM.ASSISTANT_COMPLETE, handler);
+      return () => ipcRenderer.removeListener(STREAM.ASSISTANT_COMPLETE, handler);
+    },
+    onError: (cb: (error: string) => void): (() => void) => {
+      const handler = (_: unknown, error: string) => cb(error);
+      ipcRenderer.on(STREAM.ERROR, handler);
+      return () => ipcRenderer.removeListener(STREAM.ERROR, handler);
+    },
+    onDone: (cb: (data: { sessionId: string }) => void): (() => void) => {
+      const handler = (_: unknown, data: { sessionId: string }) => cb(data);
+      ipcRenderer.on(STREAM.DONE, handler);
+      return () => ipcRenderer.removeListener(STREAM.DONE, handler);
+    },
+  },
+};
+
+contextBridge.exposeInMainWorld("api", api);
+
+export type ElectronAPI = typeof api;

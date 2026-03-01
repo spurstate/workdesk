@@ -1,0 +1,37 @@
+appId: nz.co.spurstate.workdesk
+productName: Spurstate Workdesk
+copyright: Copyright © 2026
+
+directories:
+  buildResources: resources
+  output: dist
+
+files:
+  - out/**/*
+  - resources/workspace-template/**/*
+
+extraResources:
+  - from: resources/workspace-template
+    to: workspace-template
+    filter:
+      - "**/*"
+
+mac:
+  category: public.app-category.education
+  icon: resources/icons/icon.png
+  target:
+    - target: dmg
+      arch:
+        - universal
+
+win:
+  icon: resources/icons/icon.png
+  target:
+    - nsis
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+dmg:
+  title: Spurstate Workdesk
