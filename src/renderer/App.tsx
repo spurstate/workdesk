@@ -7,6 +7,7 @@ import WorkspaceSelector from "./components/Setup/WorkspaceSelector";
 import ContextWizard from "./components/Setup/ContextWizard";
 import ApiKeyDialog from "./components/Settings/ApiKeyDialog";
 import MainLayout from "./components/MainLayout";
+import LoadingScreen from "./components/LoadingScreen";
 
 type SetupStep = "welcome" | "api-key" | "workspace" | "wizard" | "app";
 
@@ -32,11 +33,7 @@ export default function App() {
   }, [configLoading, wsLoading, hasKey, workspacePath]);
 
   if (configLoading || wsLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-slate-900 text-white">
-        <div className="text-lg text-slate-400">Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (step === "api-key") {
