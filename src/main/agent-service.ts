@@ -126,16 +126,23 @@ export async function runQuery(
       throw new Error("No API key configured");
     }
 
-    const nodeBin = findNodeBin();
+    // In packaged builds use Electron's own bundled Node.js so the app is
+    // self-contained and doesn't require Node.js to be installed on the user's
+    // machine (critical for Windows and for non-developer macOS users).
+    // ELECTRON_RUN_AS_NODE=1 makes the Electron binary behave as plain Node.js.
+    const nodeBin = app.isPackaged ? process.execPath : findNodeBin();
     const cliJsPath = getCliJsPath();
 
     // Build a clean env: spread current env, inject API key, and explicitly
     // remove CLAUDECODE so the SDK doesn't think it's running inside another
     // Claude Code session (which causes an immediate exit-code-1 crash).
     const env = { ...process.env, ANTHROPIC_API_KEY: apiKey };
+    if (app.isPackaged) {
+      (env as Record<string, string>).ELECTRON_RUN_AS_NODE = "1";
+    }
     delete (env as Record<string, string | undefined>).CLAUDECODE;
 
-    debugLog(`runQuery: nodeBin=${nodeBin} cliJsPath=${cliJsPath} cwd=${workspacePath} sessionId=${sessionId ?? "none"}`);
+    debugLog(`runQuery: nodeBin=${nodeBin} useElectronNode=${app.isPackaged} cliJsPath=${cliJsPath} cwd=${workspacePath} sessionId=${sessionId ?? "none"}`);
 
     const q = query({
       prompt,
