@@ -35,7 +35,10 @@ export default function FilePreviewModal({ filePath, fileName, onClose }: Props)
       className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-6"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+      <div
+        className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl flex flex-col"
+        style={{ width: 768, height: '80vh', minWidth: 320, minHeight: 200, resize: 'both', overflow: 'hidden' }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
           <span className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">
