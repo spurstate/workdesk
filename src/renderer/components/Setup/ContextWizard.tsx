@@ -59,7 +59,7 @@ const STEPS = [
   { title: "This Term", icon: "📅" },
 ];
 
-export default function ContextWizard({ workspacePath, onComplete, isModal, onCancel }: Props) {
+export default function ContextWizard({ workspacePath: _workspacePath, onComplete, isModal, onCancel }: Props) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<StepData>(initialData);
   const [saving, setSaving] = useState(false);
