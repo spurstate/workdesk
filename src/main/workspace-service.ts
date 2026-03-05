@@ -1,4 +1,4 @@
-import { dialog, BrowserWindow } from "electron";
+import { BrowserWindow } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import chokidar, { FSWatcher } from "chokidar";
@@ -11,97 +11,53 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let outputWatcher: FSWatcher | null = null;
 let outputDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-export async function selectWorkspaceFolder(
-  win: BrowserWindow
-): Promise<string | null> {
-  const result = await dialog.showOpenDialog(win, {
-    properties: ["openDirectory", "createDirectory"],
-    title: "Select or create your teaching workspace folder",
-    buttonLabel: "Use This Folder",
-  });
-  if (result.canceled || result.filePaths.length === 0) return null;
-  return result.filePaths[0];
-}
-
-export async function selectOutputFolder(
-  win: BrowserWindow
-): Promise<string | null> {
-  const result = await dialog.showOpenDialog(win, {
-    properties: ["openDirectory", "createDirectory"],
-    title: "Choose where to save generated files",
-    buttonLabel: "Use This Folder",
-  });
-  if (result.canceled || result.filePaths.length === 0) return null;
-  return result.filePaths[0];
-}
-
-export function copyTemplateToWorkspace(
+/**
+ * Initialise the internal workspace structure under userData.
+ * Safe to call on every launch — existing files are not overwritten.
+ */
+export function initializeWorkspace(
   workspacePath: string,
   templatePath: string
 ): void {
-  if (!fs.existsSync(templatePath)) return;
-  if (!fs.existsSync(workspacePath)) {
-    fs.mkdirSync(workspacePath, { recursive: true });
+  // Ensure required directories exist
+  for (const dir of ["context", "curriculum", "outputs"]) {
+    const p = path.join(workspacePath, dir);
+    if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
   }
-  // Skip the reference/ folder — curriculum files now live in the output folder instead
-  const entries = fs.readdirSync(templatePath, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.name === "reference") continue;
-    const srcPath = path.join(templatePath, entry.name);
-    const destPath = path.join(workspacePath, entry.name);
-    if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath);
-    } else {
-      // Always overwrite CLAUDE.md — it's managed by the app, not user-edited
-      if (entry.name === "CLAUDE.md" || !fs.existsSync(destPath)) {
-        fs.copyFileSync(srcPath, destPath);
-      }
-    }
+
+  // Seed CLAUDE.md (always overwrite — app-managed)
+  const claudeSrc = path.join(templatePath, "CLAUDE.md");
+  const claudeDest = path.join(workspacePath, "CLAUDE.md");
+  if (fs.existsSync(claudeSrc)) {
+    fs.copyFileSync(claudeSrc, claudeDest);
+  }
+
+  // Seed context template files (skip if already present — user may have filled them in)
+  const contextSrc = path.join(templatePath, "context");
+  const contextDest = path.join(workspacePath, "context");
+  if (fs.existsSync(contextSrc)) {
+    copyDirOnce(contextSrc, contextDest);
+  }
+
+  // Seed curriculum reference files from template/reference/ (skip if present)
+  const refSrc = path.join(templatePath, "reference");
+  const curriculumDest = path.join(workspacePath, "curriculum");
+  if (fs.existsSync(refSrc)) {
+    copyDirOnce(refSrc, curriculumDest);
   }
 }
 
-export function checkCurriculumFiles(outputDir: string): { exists: boolean; fileCount: number } {
-  const curriculumDir = path.join(outputDir, "curriculum");
-  if (!fs.existsSync(curriculumDir)) return { exists: false, fileCount: 0 };
-  const files = fs.readdirSync(curriculumDir).filter((f) => f.endsWith(".md"));
-  return { exists: true, fileCount: files.length };
-}
-
-export function copyCurriculumFiles(
-  outputDir: string,
-  templatePath: string
-): void {
-  const srcDir = path.join(templatePath, "reference");
-  if (!fs.existsSync(srcDir)) return;
-  const destDir = path.join(outputDir, "curriculum");
-  fs.mkdirSync(destDir, { recursive: true });
-  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-    const srcPath = path.join(srcDir, entry.name);
-    const destPath = path.join(destDir, entry.name);
-    // Don't overwrite — teacher may have customised these files
-    if (!fs.existsSync(destPath)) {
-      fs.copyFileSync(srcPath, destPath);
-    }
-  }
-}
-
-function copyDirRecursive(src: string, dest: string): void {
-  if (!fs.existsSync(dest)) {
-    fs.mkdirSync(dest, { recursive: true });
-  }
+/** Copy all files from src → dest, skipping any that already exist. */
+function copyDirOnce(src: string, dest: string): void {
+  if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
   const entries = fs.readdirSync(src, { withFileTypes: true });
   for (const entry of entries) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
     if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath);
-    } else {
-      // Don't overwrite existing files (teacher may have customised them)
-      if (!fs.existsSync(destPath)) {
-        fs.copyFileSync(srcPath, destPath);
-      }
+      copyDirOnce(srcPath, destPath);
+    } else if (!fs.existsSync(destPath)) {
+      fs.copyFileSync(srcPath, destPath);
     }
   }
 }
@@ -116,7 +72,6 @@ export function listWorkspaceFiles(
   const files: WorkspaceFile[] = [];
 
   for (const entry of entries) {
-    // Skip hidden files and node_modules
     if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
 
     const fullPath = path.join(workspacePath, entry.name);
@@ -144,7 +99,7 @@ export function startWatcher(
 ): void {
   stopWatcher();
   watcher = chokidar.watch(workspacePath, {
-    ignored: /(^|[/\\])\../, // ignore hidden
+    ignored: /(^|[/\\])\../,
     ignoreInitial: true,
     depth: 2,
   });
@@ -214,6 +169,40 @@ export function listContextFiles(workspacePath: string): WorkspaceFile[] {
   }
 
   return result;
+}
+
+export function listCurriculumFiles(workspacePath: string): WorkspaceFile[] {
+  const curriculumDir = path.join(workspacePath, "curriculum");
+  if (!fs.existsSync(curriculumDir)) return [];
+  return fs
+    .readdirSync(curriculumDir, { withFileTypes: true })
+    .filter((e) => e.isFile())
+    .map((e) => ({ name: e.name, path: path.join(curriculumDir, e.name), isDirectory: false }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function importCurriculumFiles(
+  workspacePath: string,
+  sourcePaths: string[]
+): void {
+  const destDir = path.join(workspacePath, "curriculum");
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+  for (const src of sourcePaths) {
+    const name = path.basename(src);
+    fs.copyFileSync(src, path.join(destDir, name));
+  }
+}
+
+export function deleteCurriculumFile(filePath: string): void {
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+}
+
+export function exportFiles(sourcePaths: string[], destDir: string): void {
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+  for (const src of sourcePaths) {
+    const name = path.basename(src);
+    fs.copyFileSync(src, path.join(destDir, name));
+  }
 }
 
 export function startOutputWatcher(outputPath: string, win: BrowserWindow): void {

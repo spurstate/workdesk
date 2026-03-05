@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import { getOutputPath } from "./config-service";
 
 export function buildCommandPrompt(
   workspacePath: string,
@@ -21,9 +20,8 @@ export function buildCommandPrompt(
     throw new Error(`Command file not found: ${commandPath}`);
   }
 
-  const storedOutput = getOutputPath();
-  const outputDir = (storedOutput && storedOutput.trim()) ? storedOutput : path.join(workspacePath, "outputs");
-  const curriculumDir = path.join(outputDir, "curriculum");
+  const outputDir = path.join(workspacePath, "outputs");
+  const curriculumDir = path.join(workspacePath, "curriculum");
   const template = fs.readFileSync(commandPath, "utf8");
   return template
     .replace(/\$ARGUMENTS/g, args)

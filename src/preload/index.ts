@@ -15,18 +15,10 @@ const api = {
       ipcRenderer.invoke(IPC.CONFIG_GET_MODEL),
     setModel: (model: string): Promise<void> =>
       ipcRenderer.invoke(IPC.CONFIG_SET_MODEL, model),
-    getOutputPath: (): Promise<string | null> =>
-      ipcRenderer.invoke(IPC.CONFIG_GET_OUTPUT_PATH),
-    setOutputPath: (p: string): Promise<void> =>
-      ipcRenderer.invoke(IPC.CONFIG_SET_OUTPUT_PATH, p),
   },
 
-  // Output folder
+  // Generated resources (outputs)
   output: {
-    selectFolder: (): Promise<string | null> =>
-      ipcRenderer.invoke(IPC.OUTPUT_SELECT_FOLDER),
-    checkCurriculum: (): Promise<{ exists: boolean; fileCount: number }> =>
-      ipcRenderer.invoke(IPC.OUTPUT_CHECK_CURRICULUM),
     listFiles: (): Promise<WorkspaceFile[]> =>
       ipcRenderer.invoke(IPC.OUTPUT_LIST_FILES),
     onFilesChanged: (cb: (files: WorkspaceFile[]) => void): (() => void) => {
@@ -38,17 +30,13 @@ const api = {
 
   // Workspace
   workspace: {
-    select: (): Promise<string | null> =>
-      ipcRenderer.invoke(IPC.WORKSPACE_SELECT),
-    getCurrent: (): Promise<string | null> =>
+    getCurrent: (): Promise<string> =>
       ipcRenderer.invoke(IPC.WORKSPACE_GET_CURRENT),
     listFiles: (): Promise<WorkspaceFile[]> =>
       ipcRenderer.invoke(IPC.WORKSPACE_LIST_FILES),
     readFile: (absolutePath: string): Promise<string> =>
       ipcRenderer.invoke(IPC.WORKSPACE_READ_FILE, absolutePath),
-    onFilesChanged: (
-      cb: (files: WorkspaceFile[]) => void
-    ): (() => void) => {
+    onFilesChanged: (cb: (files: WorkspaceFile[]) => void): (() => void) => {
       const handler = (_: unknown, files: WorkspaceFile[]) => cb(files);
       ipcRenderer.on(WORKSPACE_EVENTS.FILES_CHANGED, handler);
       return () => ipcRenderer.removeListener(WORKSPACE_EVENTS.FILES_CHANGED, handler);
@@ -66,6 +54,22 @@ const api = {
   context: {
     writeFile: (relativePath: string, content: string): Promise<void> =>
       ipcRenderer.invoke(IPC.CONTEXT_WRITE_FILE, relativePath, content),
+  },
+
+  // Curriculum management
+  curriculum: {
+    listFiles: (): Promise<WorkspaceFile[]> =>
+      ipcRenderer.invoke(IPC.CURRICULUM_LIST_FILES),
+    importFile: (): Promise<string[]> =>
+      ipcRenderer.invoke(IPC.CURRICULUM_IMPORT_FILE),
+    deleteFile: (filePath: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.CURRICULUM_DELETE_FILE, filePath),
+  },
+
+  // File export
+  files: {
+    export: (sourcePaths: string[]): Promise<boolean> =>
+      ipcRenderer.invoke(IPC.FILES_EXPORT, sourcePaths),
   },
 
   // Commands

@@ -2,37 +2,39 @@ import React, { useState, useEffect } from "react";
 import { useConfig } from "./hooks/useConfig";
 import { useWorkspace } from "./hooks/useWorkspace";
 import { useTheme } from "./hooks/useTheme";
-import WelcomeScreen from "./components/Setup/WelcomeScreen";
-import WorkspaceSelector from "./components/Setup/WorkspaceSelector";
 import ContextWizard from "./components/Setup/ContextWizard";
 import ApiKeyDialog from "./components/Settings/ApiKeyDialog";
 import MainLayout from "./components/MainLayout";
 import LoadingScreen from "./components/LoadingScreen";
 
-type SetupStep = "welcome" | "api-key" | "workspace" | "wizard" | "app";
+type SetupStep = "api-key" | "wizard" | "app";
 
 export default function App() {
   useTheme(); // initialises dark/light class on <html> from localStorage
   const { hasKey, loading: configLoading, setKey } = useConfig();
-  const { workspacePath, loading: wsLoading, selectWorkspace } = useWorkspace();
-  const [step, setStep] = useState<SetupStep>("welcome");
+  const { workspacePath } = useWorkspace();
+  const [step, setStep] = useState<SetupStep>("api-key");
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [showContextWizard, setShowContextWizard] = useState(false);
+  const [minLoadingDone, setMinLoadingDone] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMinLoadingDone(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   // Determine initial step after loading
   useEffect(() => {
-    if (configLoading || wsLoading) return;
+    if (configLoading) return;
     if (!hasKey) {
       setStep("api-key");
-    } else if (!workspacePath) {
-      setStep("welcome");
     } else {
       const wizardDone = localStorage.getItem("wizardComplete") === "true";
       setStep(wizardDone ? "app" : "wizard");
     }
-  }, [configLoading, wsLoading, hasKey, workspacePath]);
+  }, [configLoading, hasKey]);
 
-  if (configLoading || wsLoading) {
+  if (configLoading || !minLoadingDone) {
     return <LoadingScreen />;
   }
 
@@ -41,28 +43,10 @@ export default function App() {
       <ApiKeyDialog
         onSave={async (key) => {
           await setKey(key);
-          setStep(workspacePath ? "app" : "welcome");
+          const wizardDone = localStorage.getItem("wizardComplete") === "true";
+          setStep(wizardDone ? "app" : "wizard");
         }}
         required
-      />
-    );
-  }
-
-  if (step === "welcome") {
-    return (
-      <WelcomeScreen
-        onGetStarted={() => setStep("workspace")}
-      />
-    );
-  }
-
-  if (step === "workspace") {
-    return (
-      <WorkspaceSelector
-        onSelect={async () => {
-          const path = await selectWorkspace();
-          if (path) setStep("wizard");
-        }}
       />
     );
   }
@@ -70,7 +54,7 @@ export default function App() {
   if (step === "wizard") {
     return (
       <ContextWizard
-        workspacePath={workspacePath!}
+        workspacePath={workspacePath ?? ""}
         onComplete={() => {
           localStorage.setItem("wizardComplete", "true");
           setStep("app");
@@ -82,7 +66,7 @@ export default function App() {
   return (
     <>
       <MainLayout
-        workspacePath={workspacePath!}
+        workspacePath={workspacePath ?? ""}
         onOpenSettings={() => setShowApiKeyDialog(true)}
         onUpdateContext={() => setShowContextWizard(true)}
       />
@@ -98,7 +82,7 @@ export default function App() {
       {showContextWizard && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <ContextWizard
-            workspacePath={workspacePath!}
+            workspacePath={workspacePath ?? ""}
             onComplete={() => setShowContextWizard(false)}
             isModal
             onCancel={() => setShowContextWizard(false)}

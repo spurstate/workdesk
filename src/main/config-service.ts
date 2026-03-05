@@ -1,10 +1,8 @@
-import { safeStorage } from "electron";
+import { app, safeStorage } from "electron";
 import Store from "electron-store";
 
 interface StoreSchema {
   encryptedApiKey?: string;
-  workspacePath?: string;
-  outputPath?: string;
   model?: string;
 }
 
@@ -43,20 +41,8 @@ export function clearApiKey(): void {
   store.delete("encryptedApiKey");
 }
 
-export function getWorkspacePath(): string | null {
-  return store.get("workspacePath") ?? null;
-}
-
-export function setWorkspacePath(path: string): void {
-  store.set("workspacePath", path);
-}
-
-export function getOutputPath(): string | null {
-  return store.get("outputPath") ?? null;
-}
-
-export function setOutputPath(p: string): void {
-  store.set("outputPath", p);
+export function getWorkspacePath(): string {
+  return app.getPath("userData");
 }
 
 export function getModel(): string {
@@ -65,4 +51,12 @@ export function getModel(): string {
 
 export function setModel(model: string): void {
   store.set("model", model);
+}
+
+/** One-time migration: remove legacy workspacePath/outputPath keys if present. */
+export function migrateLegacyConfig(): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const s = store as Store<any>;
+  s.delete("workspacePath");
+  s.delete("outputPath");
 }

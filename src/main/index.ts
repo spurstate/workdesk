@@ -2,8 +2,8 @@ import { app, BrowserWindow, shell } from "electron";
 import { join } from "path";
 import { execFileSync } from "child_process";
 import * as fs from "fs";
-import { getWorkspacePath, getOutputPath } from "./config-service";
-import { startWatcher, stopWatcher, copyCurriculumFiles } from "./workspace-service";
+import { getWorkspacePath, migrateLegacyConfig } from "./config-service";
+import { initializeWorkspace, startWatcher, stopWatcher, startOutputWatcher, stopOutputWatcher } from "./workspace-service";
 import { registerIpcHandlers } from "./ipc-handlers";
 
 // Fix PATH for packaged app on macOS.
@@ -102,22 +102,21 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  // Remove any legacy config keys from earlier app versions
+  migrateLegacyConfig();
+
   const win = createWindow();
   const templatePath = getTemplatePath();
+  const workspacePath = getWorkspacePath();
+
+  // Ensure internal workspace structure is set up (no-op if already present)
+  initializeWorkspace(workspacePath, templatePath);
 
   registerIpcHandlers(win, templatePath);
 
-  // Start watching existing workspace if setup already done
-  const existingWorkspace = getWorkspacePath();
-  if (existingWorkspace) {
-    // Silently re-seed any missing curriculum files (no-op if already present)
-    const existingOutput = getOutputPath();
-    const defaultOutputDir = join(existingWorkspace, "outputs");
-    const seedDir = (existingOutput && existingOutput.trim()) ? existingOutput : defaultOutputDir;
-    copyCurriculumFiles(seedDir, templatePath);
-
-    startWatcher(existingWorkspace, win);
-  }
+  // Start file watchers
+  startWatcher(workspacePath, win);
+  startOutputWatcher(join(workspacePath, "outputs"), win);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -128,6 +127,7 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   stopWatcher();
+  stopOutputWatcher();
   if (process.platform !== "darwin") {
     app.quit();
   }

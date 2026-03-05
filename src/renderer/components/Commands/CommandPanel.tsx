@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { CommandType } from "../../../shared/types";
 import LessonPlanForm from "./LessonPlanForm";
 import UnitPlanForm from "./UnitPlanForm";
@@ -32,14 +32,6 @@ const COMMANDS: CommandDef[] = [
 export default function CommandPanel({ onSubmit }: Props) {
   const [active, setActive] = useState<CommandType | null>(null);
   const [commandError, setCommandError] = useState<string>("");
-  const [curriculumMissing, setCurriculumMissing] = useState(false);
-  const [curriculumDismissed, setCurriculumDismissed] = useState(false);
-
-  useEffect(() => {
-    window.api.output.checkCurriculum().then(({ exists, fileCount }) => {
-      if (!exists || fileCount === 0) setCurriculumMissing(true);
-    }).catch(() => {/* ignore */});
-  }, []);
 
   const handleSelect = (id: CommandType) => {
     setActive(active === id ? null : id);
@@ -61,17 +53,6 @@ export default function CommandPanel({ onSubmit }: Props) {
 
   return (
     <div className="p-4">
-      {curriculumMissing && !curriculumDismissed && (
-        <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-2 mb-3 text-xs text-amber-800 dark:text-amber-300">
-          <span className="shrink-0 mt-0.5">⚠️</span>
-          <span className="flex-1">Curriculum folder not found. Reference materials may be unavailable. Check your output folder in Settings.</span>
-          <button
-            onClick={() => setCurriculumDismissed(true)}
-            className="shrink-0 text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-100 transition-colors ml-1"
-            aria-label="Dismiss"
-          >✕</button>
-        </div>
-      )}
       <div className="flex flex-col gap-2 mb-3">
         <div className="flex items-start gap-3">
           <span className="text-xs font-medium text-gray-500 dark:text-slate-400 w-28 shrink-0 pt-1.5">Workspace</span>

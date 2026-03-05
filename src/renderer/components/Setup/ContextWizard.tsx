@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import logoSrc from "../../assets/logo.png";
 
 interface Props {
@@ -57,7 +57,6 @@ const STEPS = [
   { title: "About You", icon: "👩‍🏫" },
   { title: "Your Classes", icon: "📚" },
   { title: "This Term", icon: "📅" },
-  { title: "Output Folder", icon: "📁" },
 ];
 
 export default function ContextWizard({ workspacePath, onComplete, isModal, onCancel }: Props) {
@@ -65,12 +64,7 @@ export default function ContextWizard({ workspacePath, onComplete, isModal, onCa
   const [data, setData] = useState<StepData>(initialData);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [outputPath, setOutputPath] = useState<string | null>(null);
   const savingRef = useRef(false);
-
-  useEffect(() => {
-    window.api.config.getOutputPath().then(setOutputPath);
-  }, []);
 
   const update = (field: keyof StepData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -347,42 +341,6 @@ export default function ContextWizard({ workspacePath, onComplete, isModal, onCa
             </div>
           )}
 
-          {step === 4 && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-slate-400">
-                Choose where generated lesson plans, unit plans, and other files will be saved.
-              </p>
-              <div className="bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3">
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Current output folder</p>
-                <p className="text-sm text-gray-900 dark:text-white break-all font-mono">
-                  {outputPath ?? `${workspacePath}/outputs (default)`}
-                </p>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50 rounded-lg px-3 py-2 leading-relaxed">
-                All reference materials — curriculum teaching sequences, NZ curriculum levels, lesson plan template, and report writing guide — are in a <span className="font-mono">curriculum/</span> subfolder here. You can edit any file or add new curriculum documents (e.g. <span className="font-mono">Science-Yr7-Curriculum.md</span>) and Claude will use them automatically.
-              </p>
-              <button
-                onClick={async () => {
-                  const selected = await window.api.output.selectFolder();
-                  if (selected) setOutputPath(selected);
-                }}
-                className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                📁 Choose Folder
-              </button>
-              {outputPath && (
-                <button
-                  onClick={async () => {
-                    await window.api.config.setOutputPath("");
-                    setOutputPath(null);
-                  }}
-                  className="w-full text-xs text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 py-1 transition-colors"
-                >
-                  Reset to default (inside workspace)
-                </button>
-              )}
-            </div>
-          )}
         </div>
 
         {saveError && (

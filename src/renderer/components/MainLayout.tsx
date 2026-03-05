@@ -10,6 +10,7 @@ import CommandPanel from "./Commands/CommandPanel";
 import FileBrowser from "./Sidebar/FileBrowser";
 import FilePreviewModal from "./Sidebar/FilePreviewModal";
 import SessionList from "./Sidebar/SessionList";
+import ManageFilesModal from "./Files/ManageFilesModal";
 
 interface Props {
   workspacePath: string;
@@ -19,35 +20,31 @@ interface Props {
 
 type SidebarTab = "files" | "sessions";
 
-export default function MainLayout({ workspacePath: _workspacePath, onOpenSettings, onUpdateContext }: Props) {
+function flattenFiles(files: WorkspaceFile[]): string[] {
+  const paths: string[] = [];
+  for (const f of files) {
+    if (f.isDirectory && f.children) {
+      paths.push(...flattenFiles(f.children));
+    } else if (!f.isDirectory) {
+      paths.push(f.path);
+    }
+  }
+  return paths;
+}
+
+export default function MainLayout({ workspacePath, onOpenSettings, onUpdateContext }: Props) {
   const chat = useChat();
   const { sessions, loading: sessionsLoading, error: sessionsError, refresh: refreshSessions } = useSessions();
   const { theme, toggleTheme } = useTheme();
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("files");
   const [showCommands, setShowCommands] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
-  const [outputPath, setOutputPath] = useState<string | null>(null);
-  const [contextFiles, setContextFiles] = useState<WorkspaceFile[]>([]);
   const [outputFiles, setOutputFiles] = useState<WorkspaceFile[]>([]);
+  const [showManageFiles, setShowManageFiles] = useState(false);
 
+  // Load generated resources on mount and on live changes
   useEffect(() => {
-    window.api.config.getOutputPath().then(setOutputPath);
-  }, []);
-
-  // Load context files on mount; re-fetch when wizard writes context files
-  useEffect(() => {
-    const fetchContext = () => window.api.workspace.listContextFiles().then(setContextFiles);
-    fetchContext();
-    return window.api.workspace.onContextChanged(fetchContext);
-  }, []);
-
-  // Re-fetch output files when outputPath changes (new folder selected)
-  useEffect(() => {
-    if (outputPath) window.api.output.listFiles().then(setOutputFiles);
-  }, [outputPath]);
-
-  // Subscribe to live output folder changes (files written by Claude)
-  useEffect(() => {
+    window.api.output.listFiles().then(setOutputFiles);
     return window.api.output.onFilesChanged(setOutputFiles);
   }, []);
 
@@ -63,6 +60,12 @@ export default function MainLayout({ workspacePath: _workspacePath, onOpenSettin
   const handleResumeSession = (sessionId: string) => {
     setSidebarTab("files");
     chat.resumeSession(sessionId);
+  };
+
+  const handleExportOutputs = async () => {
+    const paths = flattenFiles(outputFiles);
+    if (paths.length === 0) return;
+    await window.api.files.export(paths);
   };
 
   return (
@@ -118,32 +121,31 @@ export default function MainLayout({ workspacePath: _workspacePath, onOpenSettin
         <div className="flex-1 overflow-y-auto">
           {sidebarTab === "files" ? (
             <div>
-              {/* Output Folder section */}
-              <p className="px-3 pt-3 pb-1 text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
-                Output Folder
-              </p>
-              {outputPath ? (
+              {/* Generated Resources section header */}
+              <div className="px-3 pt-3 pb-1 flex items-center justify-between">
+                <p className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+                  Generated Resources
+                </p>
+                {outputFiles.length > 0 && (
+                  <button
+                    onClick={handleExportOutputs}
+                    title="Export all generated resources"
+                    className="text-[10px] text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                  >
+                    Export ↓
+                  </button>
+                )}
+              </div>
+              {outputFiles.length > 0 ? (
                 <FileBrowser
                   files={outputFiles}
                   onOpenFile={(path, name) => setPreviewFile({ path, name })}
                 />
               ) : (
                 <p className="px-3 pb-2 text-xs text-gray-400 dark:text-slate-500">
-                  No output folder selected
+                  No files yet — run a command to generate resources
                 </p>
               )}
-
-              {/* Divider */}
-              <div className="border-t border-gray-200 dark:border-slate-700 mx-3 my-2" />
-
-              {/* Workspace section */}
-              <p className="px-3 pb-1 text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
-                Workspace
-              </p>
-              <FileBrowser
-                files={contextFiles}
-                onOpenFile={(path, name) => setPreviewFile({ path, name })}
-              />
             </div>
           ) : (
             <SessionList
@@ -165,19 +167,11 @@ export default function MainLayout({ workspacePath: _workspacePath, onOpenSettin
             ✏ Update Context
           </button>
           <button
-            onClick={async () => {
-              const selected = await window.api.output.selectFolder();
-              if (selected) setOutputPath(selected);
-            }}
-            data-testid="output-folder-btn"
+            onClick={() => setShowManageFiles(true)}
+            data-testid="manage-files-btn"
             className="w-full text-xs text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 py-1 text-left"
           >
-            📁 Output Folder
-            {outputPath && (
-              <span className="block text-[10px] text-gray-400 dark:text-slate-500 truncate mt-0.5">
-                {outputPath.split("/").pop()}
-              </span>
-            )}
+            🗂 Manage Files
           </button>
           <button
             onClick={onOpenSettings}
@@ -227,11 +221,19 @@ export default function MainLayout({ workspacePath: _workspacePath, onOpenSettin
           />
         </div>
       </div>
+
       {previewFile && (
         <FilePreviewModal
           filePath={previewFile.path}
           fileName={previewFile.name}
           onClose={() => setPreviewFile(null)}
+        />
+      )}
+
+      {showManageFiles && (
+        <ManageFilesModal
+          workspacePath={workspacePath}
+          onClose={() => setShowManageFiles(false)}
         />
       )}
     </div>
