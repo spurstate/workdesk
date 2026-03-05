@@ -46,3 +46,29 @@ export async function listSessions(workspacePath: string): Promise<SessionInfo[]
     return [];
   }
 }
+
+export function loadSessionMessages(
+  workspacePath: string,
+  sessionId: string
+): { role: string; content: string }[] {
+  try {
+    const filePath = path.join(workspacePath, ".claude", "sessions", `${sessionId}.json`);
+    const raw = fs.readFileSync(filePath, "utf8");
+    const data = JSON.parse(raw);
+    const messages: { role: string; content: string | unknown[] }[] = data.messages ?? [];
+    return messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role,
+        content:
+          typeof m.content === "string"
+            ? m.content
+            : Array.isArray(m.content) &&
+              typeof (m.content[0] as { text?: string })?.text === "string"
+            ? (m.content[0] as { text: string }).text
+            : "",
+      }));
+  } catch {
+    return [];
+  }
+}

@@ -4,7 +4,7 @@ import logoSrc from "../assets/logo.png";
 import { useChat } from "../hooks/useChat";
 import { useSessions } from "../hooks/useSessions";
 import { useTheme } from "../hooks/useTheme";
-import type { WorkspaceFile } from "../../shared/types";
+import type { WorkspaceFile, ChatMessage } from "../../shared/types";
 import ChatView from "./Chat/ChatView";
 import CommandPanel from "./Commands/CommandPanel";
 import FileBrowser from "./Sidebar/FileBrowser";
@@ -59,9 +59,16 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
     await chat.sendMessage(prompt, label);
   };
 
-  const handleResumeSession = (sessionId: string) => {
+  const handleResumeSession = async (sessionId: string) => {
+    const raw = await window.api.session.loadMessages(sessionId);
+    const messages: ChatMessage[] = raw.map((m, i) => ({
+      id: `resumed-${i}`,
+      role: m.role as "user" | "assistant",
+      content: m.content,
+      timestamp: 0,
+    }));
     setSidebarTab("files");
-    chat.resumeSession(sessionId);
+    chat.resumeSession(sessionId, messages);
   };
 
   const handleExportOutputs = async () => {

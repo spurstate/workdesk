@@ -20,7 +20,7 @@ type ChatAction =
   | { type: "ERROR"; payload: string }
   | { type: "ABORT" }
   | { type: "CLEAR" }
-  | { type: "RESUME"; payload: string };
+  | { type: "RESUME"; payload: { sessionId: string; messages: ChatMessage[] } };
 
 function createId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -114,14 +114,12 @@ function reducer(state: ChatState, action: ChatAction): ChatState {
       };
 
     case "RESUME":
-      // Store the session ID so the next user message resumes it automatically.
-      // Don't send any dummy message — the SDK resume option handles context loading.
       return {
-        messages: [],
+        messages: action.payload.messages,
         isStreaming: false,
         streamingText: "",
         activeTool: null,
-        currentSessionId: action.payload,
+        currentSessionId: action.payload.sessionId,
         error: null,
       };
 
@@ -187,8 +185,8 @@ export function useChat() {
     dispatch({ type: "CLEAR" });
   }, []);
 
-  const resumeSession = useCallback((sessionId: string) => {
-    dispatch({ type: "RESUME", payload: sessionId });
+  const resumeSession = useCallback((sessionId: string, messages: ChatMessage[]) => {
+    dispatch({ type: "RESUME", payload: { sessionId, messages } });
   }, []);
 
   return { ...state, sendMessage, abort, clearChat, resumeSession };

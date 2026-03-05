@@ -81,6 +81,8 @@ const api = {
   // Sessions
   session: {
     list: (): Promise<SessionInfo[]> => ipcRenderer.invoke(IPC.SESSION_LIST),
+    loadMessages: (sessionId: string): Promise<{ role: string; content: string }[]> =>
+      ipcRenderer.invoke(IPC.SESSION_LOAD_MESSAGES, sessionId),
   },
 
   // Chat / streaming

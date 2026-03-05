@@ -20,7 +20,7 @@ import {
   writeContextFile,
 } from "./workspace-service";
 import { buildCommandPrompt } from "./command-service";
-import { listSessions } from "./session-service";
+import { listSessions, loadSessionMessages } from "./session-service";
 import { runQuery, abortCurrentQuery } from "./agent-service";
 
 export function registerIpcHandlers(win: BrowserWindow, templatePath: string): void {
@@ -117,6 +117,10 @@ export function registerIpcHandlers(win: BrowserWindow, templatePath: string): v
   // ── Sessions ──────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.SESSION_LIST, async () => {
     return listSessions(wp());
+  });
+
+  ipcMain.handle(IPC.SESSION_LOAD_MESSAGES, (_event, sessionId: string) => {
+    return loadSessionMessages(wp(), sessionId);
   });
 
   // ── Chat / Agent ──────────────────────────────────────────────────────────

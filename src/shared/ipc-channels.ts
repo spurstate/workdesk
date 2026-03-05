@@ -33,6 +33,7 @@ export const IPC = {
 
   // Sessions
   SESSION_LIST: "session:list",
+  SESSION_LOAD_MESSAGES: "session:load-messages",
 
   // Command service
   COMMAND_BUILD_PROMPT: "command:build-prompt",
