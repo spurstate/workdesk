@@ -180,6 +180,7 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
           >
             ⚙ Settings
           </button>
+          <p className="text-[10px] text-gray-300 dark:text-slate-600 text-center pt-1">Powered by Anthropic</p>
         </div>
       </div>
 

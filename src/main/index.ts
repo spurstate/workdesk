@@ -5,6 +5,7 @@ import * as fs from "fs";
 import { getWorkspacePath, migrateLegacyConfig } from "./config-service";
 import { initializeWorkspace, startWatcher, stopWatcher, startOutputWatcher, stopOutputWatcher } from "./workspace-service";
 import { registerIpcHandlers } from "./ipc-handlers";
+import { abortCurrentQuery } from "./agent-service";
 
 // Fix PATH for packaged app on macOS.
 // Electron launches without the user's shell PATH so Node.js (spawned by the
@@ -125,10 +126,18 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("window-all-closed", () => {
+app.on("before-quit", () => {
+  abortCurrentQuery();
   stopWatcher();
   stopOutputWatcher();
+});
+
+app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    app.quit();
+    app.quit(); // before-quit will handle cleanup
+  } else {
+    // macOS: app stays alive in dock — stop watchers to prevent stale IPC sends
+    stopWatcher();
+    stopOutputWatcher();
   }
 });

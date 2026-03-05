@@ -392,6 +392,7 @@ export default function ContextWizard({ workspacePath, onComplete, isModal, onCa
             You can update this info anytime from Settings
           </p>
         )}
+        <p className="text-center text-xs text-gray-300 dark:text-slate-600 mt-3">Powered by Anthropic</p>
       </div>
   );
 
