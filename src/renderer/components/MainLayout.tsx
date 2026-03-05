@@ -11,6 +11,7 @@ import FileBrowser from "./Sidebar/FileBrowser";
 import FilePreviewModal from "./Sidebar/FilePreviewModal";
 import SessionList from "./Sidebar/SessionList";
 import ManageFilesModal from "./Files/ManageFilesModal";
+import HowToUseModal from "./HowToUseModal";
 
 interface Props {
   workspacePath: string;
@@ -41,6 +42,7 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
   const [previewFile, setPreviewFile] = useState<{ path: string; name: string } | null>(null);
   const [outputFiles, setOutputFiles] = useState<WorkspaceFile[]>([]);
   const [showManageFiles, setShowManageFiles] = useState(false);
+  const [showHowToUse, setShowHowToUse] = useState(false);
 
   // Load generated resources on mount and on live changes
   useEffect(() => {
@@ -160,6 +162,12 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
         {/* Sidebar footer */}
         <div className="p-3 border-t border-gray-200 dark:border-slate-700 space-y-1">
           <button
+            onClick={() => setShowHowToUse(true)}
+            className="w-full text-xs text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 py-1 text-left"
+          >
+            📖 How to Use
+          </button>
+          <button
             onClick={onUpdateContext}
             data-testid="update-context-btn"
             className="w-full text-xs text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 py-1 text-left"
@@ -193,7 +201,7 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
             data-testid="cmd-toggle"
             className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md transition-colors"
           >
-            {showCommands ? "✕ Close Commands" : "⚡ Commands"}
+            {showCommands ? "✕ Close Tasks" : "⚡ Tasks"}
           </button>
           {chat.currentSessionId && (
             <span className="ml-3 text-xs text-gray-400 dark:text-slate-500">
@@ -236,6 +244,10 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
           workspacePath={workspacePath}
           onClose={() => setShowManageFiles(false)}
         />
+      )}
+
+      {showHowToUse && (
+        <HowToUseModal onClose={() => setShowHowToUse(false)} />
       )}
     </div>
   );

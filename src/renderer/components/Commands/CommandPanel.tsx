@@ -3,10 +3,6 @@ import type { CommandType } from "../../../shared/types";
 import LessonPlanForm from "./LessonPlanForm";
 import UnitPlanForm from "./UnitPlanForm";
 import ReportCommentsForm from "./ReportCommentsForm";
-import CreatePresentationForm from "./CreatePresentationForm";
-import TeacherGuideForm from "./TeacherGuideForm";
-import CreatePlanForm from "./CreatePlanForm";
-import ImplementForm from "./ImplementForm";
 
 interface Props {
   onSubmit: (prompt: string, label?: string) => void;
@@ -16,17 +12,28 @@ interface CommandDef {
   id: CommandType;
   label: string;
   icon: string;
-  group: "teaching" | "workspace";
+  hint: string;
 }
 
 const COMMANDS: CommandDef[] = [
-  { id: "lesson-plan", label: "Lesson Plan", icon: "📚", group: "teaching" },
-  { id: "unit-plan", label: "Unit Plan", icon: "📋", group: "teaching" },
-  { id: "report-comments", label: "Report Comments", icon: "✍️", group: "teaching" },
-  { id: "create-presentation", label: "Presentation", icon: "📊", group: "teaching" },
-  { id: "teacher-guide", label: "Teacher Guide", icon: "📖", group: "teaching" },
-  { id: "create-plan", label: "Create Plan", icon: "🗺️", group: "workspace" },
-  { id: "implement", label: "Implement", icon: "⚡", group: "workspace" },
+  {
+    id: "lesson-plan",
+    label: "Lesson Plan",
+    icon: "📚",
+    hint: "Generates a complete NZ Curriculum-aligned lesson plan saved to your outputs folder.",
+  },
+  {
+    id: "unit-plan",
+    label: "Unit Plan",
+    icon: "📋",
+    hint: "Generates a full unit of work with lesson sequence, assessment plan, and curriculum alignment.",
+  },
+  {
+    id: "report-comments",
+    label: "Report Comments",
+    icon: "✍️",
+    hint: "Generates strengths-based report comments ready to personalise with student names.",
+  },
 ];
 
 export default function CommandPanel({ onSubmit }: Props) {
@@ -48,52 +55,31 @@ export default function CommandPanel({ onSubmit }: Props) {
     }
   };
 
-  const teaching = COMMANDS.filter((c) => c.group === "teaching");
-  const workspace = COMMANDS.filter((c) => c.group === "workspace");
+  const activeCommand = COMMANDS.find((c) => c.id === active);
 
   return (
     <div className="p-4">
-      <div className="flex flex-col gap-2 mb-3">
-        <div className="flex items-start gap-3">
-          <span className="text-xs font-medium text-gray-500 dark:text-slate-400 w-28 shrink-0 pt-1.5">Workspace</span>
-          <div className="flex flex-wrap gap-2">
-            {workspace.map((cmd) => (
-              <button
-                key={cmd.id}
-                onClick={() => handleSelect(cmd.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  active === cmd.id
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-300 dark:hover:bg-slate-600"
-                }`}
-              >
-                {cmd.icon} {cmd.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-start gap-3">
-          <span className="text-xs font-medium text-gray-500 dark:text-slate-400 w-28 shrink-0 pt-1.5">Teaching Options</span>
-          <div className="flex flex-wrap gap-2">
-            {teaching.map((cmd) => (
-              <button
-                key={cmd.id}
-                onClick={() => handleSelect(cmd.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  active === cmd.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-300 dark:hover:bg-slate-600"
-                }`}
-              >
-                {cmd.icon} {cmd.label}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {COMMANDS.map((cmd) => (
+          <button
+            key={cmd.id}
+            onClick={() => handleSelect(cmd.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              active === cmd.id
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-300 dark:hover:bg-slate-600"
+            }`}
+          >
+            {cmd.icon} {cmd.label}
+          </button>
+        ))}
       </div>
 
       {active && (
         <div className="bg-gray-100 dark:bg-slate-900 rounded-lg p-4 mt-2">
+          {activeCommand && (
+            <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">{activeCommand.hint}</p>
+          )}
           {commandError && (
             <p className="text-red-400 text-xs mb-3">{commandError}</p>
           )}
@@ -105,18 +91,6 @@ export default function CommandPanel({ onSubmit }: Props) {
           )}
           {active === "report-comments" && (
             <ReportCommentsForm onSubmit={(args) => handleSubmit("report-comments", args)} />
-          )}
-          {active === "create-presentation" && (
-            <CreatePresentationForm onSubmit={(args) => handleSubmit("create-presentation", args)} />
-          )}
-          {active === "teacher-guide" && (
-            <TeacherGuideForm onSubmit={(args) => handleSubmit("teacher-guide", args)} />
-          )}
-          {active === "create-plan" && (
-            <CreatePlanForm onSubmit={(args) => handleSubmit("create-plan", args)} />
-          )}
-          {active === "implement" && (
-            <ImplementForm onSubmit={(args) => handleSubmit("implement", args)} />
           )}
         </div>
       )}

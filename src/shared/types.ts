@@ -24,11 +24,7 @@ export interface SessionInfo {
 export type CommandType =
   | "lesson-plan"
   | "unit-plan"
-  | "report-comments"
-  | "create-presentation"
-  | "teacher-guide"
-  | "create-plan"
-  | "implement";
+  | "report-comments";
 
 export interface AppConfig {
   workspacePath: string | null;
