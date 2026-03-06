@@ -15,6 +15,7 @@ import HowToUseModal from "./HowToUseModal";
 
 interface Props {
   workspacePath: string;
+  hasKey: boolean;
   onOpenSettings: () => void;
   onUpdateContext: () => void;
 }
@@ -33,7 +34,7 @@ function flattenFiles(files: WorkspaceFile[]): string[] {
   return paths;
 }
 
-export default function MainLayout({ workspacePath, onOpenSettings, onUpdateContext }: Props) {
+export default function MainLayout({ workspacePath, hasKey, onOpenSettings, onUpdateContext }: Props) {
   const chat = useChat();
   const { sessions, loading: sessionsLoading, error: sessionsError, refresh: refreshSessions } = useSessions();
   const { theme, toggleTheme } = useTheme();
@@ -44,6 +45,13 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
   const [showManageFiles, setShowManageFiles] = useState(false);
   const [showHowToUse, setShowHowToUse] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
+
+  // Auto-greet on fresh open when API key is available
+  useEffect(() => {
+    if (hasKey) {
+      chat.triggerAutoGreeting();
+    }
+  }, [hasKey]);
 
   // Load generated resources on mount and on live changes
   useEffect(() => {

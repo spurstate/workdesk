@@ -67,6 +67,7 @@ export default function App() {
     <>
       <MainLayout
         workspacePath={workspacePath ?? ""}
+        hasKey={hasKey}
         onOpenSettings={() => setShowApiKeyDialog(true)}
         onUpdateContext={() => setShowContextWizard(true)}
       />

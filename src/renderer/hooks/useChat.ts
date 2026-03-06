@@ -12,6 +12,7 @@ interface ChatState {
 
 type ChatAction =
   | { type: "USER_MESSAGE"; payload: string }
+  | { type: "AUTO_TRIGGER" }
   | { type: "TOKEN"; payload: string }
   | { type: "TOOL_START"; payload: string }
   | { type: "TOOL_END" }
@@ -28,6 +29,9 @@ function createId(): string {
 
 function reducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
+    case "AUTO_TRIGGER":
+      return { ...state, isStreaming: true, streamingText: "", activeTool: null, error: null };
+
     case "USER_MESSAGE":
       return {
         ...state,
@@ -74,6 +78,7 @@ function reducer(state: ChatState, action: ChatAction): ChatState {
         ],
         streamingText: "",
         activeTool: null,
+        error: null,
       };
     }
 
@@ -140,6 +145,7 @@ const initialState: ChatState = {
 export function useChat() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const unsubscribers = useRef<Array<() => void>>([]);
+  const hasTriggeredGreeting = useRef(false);
 
   useEffect(() => {
     const subs = [
@@ -189,5 +195,19 @@ export function useChat() {
     dispatch({ type: "RESUME", payload: { sessionId, messages } });
   }, []);
 
-  return { ...state, sendMessage, abort, clearChat, resumeSession };
+  const triggerAutoGreeting = useCallback(async () => {
+    if (hasTriggeredGreeting.current) return;
+    hasTriggeredGreeting.current = true;
+    dispatch({ type: "AUTO_TRIGGER" });
+    try {
+      await window.api.chat.send(
+        "Read the context files in this workspace silently. Do not describe what you are doing or summarise what you find. Output only this exact message with no other text before or after it:\n\nKia ora! Welcome to your NZ Teacher Assistant Workspace. I'm here to help with lesson plans, unit plans, report comments, presentations, curriculum alignment, and other teaching tasks. How can I support your mahi today?",
+        undefined
+      );
+    } catch (err: any) {
+      dispatch({ type: "ERROR", payload: err?.message ?? "Failed to initialise" });
+    }
+  }, []);
+
+  return { ...state, sendMessage, abort, clearChat, resumeSession, triggerAutoGreeting };
 }
