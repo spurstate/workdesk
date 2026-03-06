@@ -23,6 +23,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          VITE_SUBSCRIPTION_KEY_WEBHOOK_URL: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_URL }}
+          VITE_SUBSCRIPTION_KEY_WEBHOOK_TOKEN: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_TOKEN }}
           # To enable code signing + notarization, add these secrets and remove CSC_IDENTITY_AUTO_DISCOVERY:
           # CSC_LINK: ${{ secrets.CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -55,6 +57,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          VITE_SUBSCRIPTION_KEY_WEBHOOK_URL: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_URL }}
+          VITE_SUBSCRIPTION_KEY_WEBHOOK_TOKEN: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_TOKEN }}
           # To enable code signing, add these secrets and remove CSC_IDENTITY_AUTO_DISCOVERY:
           # CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}

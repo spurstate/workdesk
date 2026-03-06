@@ -3,11 +3,13 @@ import { useConfig } from "./hooks/useConfig";
 import { useWorkspace } from "./hooks/useWorkspace";
 import { useTheme } from "./hooks/useTheme";
 import ContextWizard from "./components/Setup/ContextWizard";
+import SubscriptionKeyDialog from "./components/Setup/SubscriptionKeyDialog";
 import ApiKeyDialog from "./components/Settings/ApiKeyDialog";
 import MainLayout from "./components/MainLayout";
 import LoadingScreen from "./components/LoadingScreen";
 
 type SetupStep = "api-key" | "wizard" | "app";
+type SubKeyStatus = "checking" | "needed" | "valid";
 
 export default function App() {
   useTheme(); // initialises dark/light class on <html> from localStorage
@@ -17,10 +19,24 @@ export default function App() {
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [showContextWizard, setShowContextWizard] = useState(false);
   const [minLoadingDone, setMinLoadingDone] = useState(false);
+  const [subKeyStatus, setSubKeyStatus] = useState<SubKeyStatus>("checking");
+  const [subKeyStoredKey, setSubKeyStoredKey] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const t = setTimeout(() => setMinLoadingDone(true), 1500);
     return () => clearTimeout(t);
+  }, []);
+
+  // Check subscription key on startup
+  useEffect(() => {
+    window.api.subscriptionKey.getStatus().then((status) => {
+      if (status === null || status.valid) {
+        setSubKeyStatus("valid");
+      } else {
+        setSubKeyStoredKey(status.storedKey);
+        setSubKeyStatus("needed");
+      }
+    }).catch(() => setSubKeyStatus("valid"));
   }, []);
 
   // Determine initial step after loading
@@ -34,8 +50,20 @@ export default function App() {
     }
   }, [configLoading, hasKey]);
 
-  if (configLoading || !minLoadingDone) {
+  if (configLoading || !minLoadingDone || subKeyStatus === "checking") {
     return <LoadingScreen />;
+  }
+
+  if (subKeyStatus === "needed") {
+    return (
+      <>
+        <LoadingScreen />
+        <SubscriptionKeyDialog
+          storedKey={subKeyStoredKey}
+          onValidated={() => setSubKeyStatus("valid")}
+        />
+      </>
+    );
   }
 
   if (step === "api-key") {

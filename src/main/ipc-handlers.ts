@@ -8,7 +8,14 @@ import {
   getWorkspacePath,
   getModel,
   setModel,
+  setSubscriptionKey,
+  setSubscriptionKeyCache,
+  clearSubscriptionKey,
 } from "./config-service";
+import {
+  validateSubscriptionKey,
+  checkSubscriptionKeyOnStartup,
+} from "./subscription-key-service";
 import {
   listWorkspaceFiles,
   listContextFiles,
@@ -133,5 +140,23 @@ export function registerIpcHandlers(win: BrowserWindow, templatePath: string): v
 
   ipcMain.handle(IPC.CHAT_ABORT, () => {
     abortCurrentQuery();
+  });
+
+  // ── Subscription key ──────────────────────────────────────────────────────
+  ipcMain.handle(IPC.SUBSCRIPTION_KEY_VALIDATE, async (_event, subscriptionKey: string) => {
+    const result = await validateSubscriptionKey(subscriptionKey);
+    if (result.valid) {
+      setSubscriptionKey(subscriptionKey);
+      setSubscriptionKeyCache({ ...result, checkedAt: Date.now(), subscriptionKey });
+    }
+    return result;
+  });
+
+  ipcMain.handle(IPC.SUBSCRIPTION_KEY_GET_STATUS, () => {
+    return checkSubscriptionKeyOnStartup();
+  });
+
+  ipcMain.handle(IPC.SUBSCRIPTION_KEY_CLEAR, () => {
+    clearSubscriptionKey();
   });
 }

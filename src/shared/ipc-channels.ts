@@ -37,6 +37,11 @@ export const IPC = {
 
   // Command service
   COMMAND_BUILD_PROMPT: "command:build-prompt",
+
+  // Subscription key
+  SUBSCRIPTION_KEY_VALIDATE: "subscriptionKey:validate",
+  SUBSCRIPTION_KEY_GET_STATUS: "subscriptionKey:get-status",
+  SUBSCRIPTION_KEY_CLEAR: "subscriptionKey:clear",
 } as const;
 
 // Main → Renderer (streaming events via webContents.send)

@@ -30,3 +30,11 @@ export interface AppConfig {
   workspacePath: string | null;
   hasApiKey: boolean;
 }
+
+export type SubscriptionKeyStatus =
+  | { valid: true; offline?: boolean }
+  | { valid: false; message: string }
+
+export type SubscriptionKeyCache = SubscriptionKeyStatus & { checkedAt: number; subscriptionKey: string }
+
+export type SubscriptionKeyStartupStatus = (SubscriptionKeyStatus & { storedKey?: string }) | null

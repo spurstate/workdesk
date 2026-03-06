@@ -1,9 +1,12 @@
 import { app, safeStorage } from "electron";
 import Store from "electron-store";
+import type { SubscriptionKeyCache } from "@shared/types";
 
 interface StoreSchema {
   encryptedApiKey?: string;
   model?: string;
+  subscriptionKey?: string;
+  subscriptionKeyCache?: SubscriptionKeyCache;
 }
 
 const store = new Store<StoreSchema>();
@@ -51,6 +54,27 @@ export function getModel(): string {
 
 export function setModel(model: string): void {
   store.set("model", model);
+}
+
+export function getSubscriptionKey(): string | null {
+  return store.get("subscriptionKey") ?? null;
+}
+
+export function setSubscriptionKey(key: string): void {
+  store.set("subscriptionKey", key);
+}
+
+export function clearSubscriptionKey(): void {
+  store.delete("subscriptionKey");
+  store.delete("subscriptionKeyCache");
+}
+
+export function getSubscriptionKeyCache(): SubscriptionKeyCache | null {
+  return store.get("subscriptionKeyCache") ?? null;
+}
+
+export function setSubscriptionKeyCache(cache: SubscriptionKeyCache): void {
+  store.set("subscriptionKeyCache", cache);
 }
 
 /** One-time migration: remove legacy workspacePath/outputPath keys if present. */

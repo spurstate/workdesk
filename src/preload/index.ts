@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { IPC, STREAM, WORKSPACE_EVENTS, OUTPUT_EVENTS } from "../shared/ipc-channels";
-import type { WorkspaceFile, SessionInfo } from "../shared/types";
+import type { WorkspaceFile, SessionInfo, SubscriptionKeyStatus, SubscriptionKeyStartupStatus } from "../shared/types";
 
 // Expose typed API to renderer
 const api = {
@@ -83,6 +83,16 @@ const api = {
     list: (): Promise<SessionInfo[]> => ipcRenderer.invoke(IPC.SESSION_LIST),
     loadMessages: (sessionId: string): Promise<{ role: string; content: string }[]> =>
       ipcRenderer.invoke(IPC.SESSION_LOAD_MESSAGES, sessionId),
+  },
+
+  // Subscription key
+  subscriptionKey: {
+    validate: (subscriptionKey: string): Promise<SubscriptionKeyStatus> =>
+      ipcRenderer.invoke(IPC.SUBSCRIPTION_KEY_VALIDATE, subscriptionKey),
+    getStatus: (): Promise<SubscriptionKeyStartupStatus> =>
+      ipcRenderer.invoke(IPC.SUBSCRIPTION_KEY_GET_STATUS),
+    clear: (): Promise<void> =>
+      ipcRenderer.invoke(IPC.SUBSCRIPTION_KEY_CLEAR),
   },
 
   // Chat / streaming
