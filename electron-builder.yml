@@ -10,6 +10,9 @@ files:
   - out/**/*
   - resources/workspace-template/**/*
 
+asarUnpack:
+  - "node_modules/@anthropic-ai/claude-agent-sdk/**/*"
+
 extraResources:
   - from: resources/workspace-template
     to: workspace-template

@@ -20,7 +20,7 @@ function fixShellPath(): void {
 
   // Strategy 1: login shell gives us the fully-resolved PATH without needing a TTY
   try {
-    const shellBin = process.env.SHELL ?? "/bin/zsh";
+    const shellBin = process.env.SHELL ?? "/bin/bash";
     const shellPath = execFileSync(shellBin, ["-l", "-c", "echo -n $PATH"], {
       encoding: "utf8",
       timeout: 5000,
