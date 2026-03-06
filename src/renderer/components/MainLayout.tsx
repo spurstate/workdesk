@@ -47,11 +47,12 @@ export default function MainLayout({ workspacePath, hasKey, onOpenSettings, onUp
   const [resumeError, setResumeError] = useState<string | null>(null);
 
   // Auto-greet on fresh open when API key is available
+  const { triggerAutoGreeting } = chat;
   useEffect(() => {
     if (hasKey) {
-      chat.triggerAutoGreeting();
+      triggerAutoGreeting();
     }
-  }, [hasKey]);
+  }, [hasKey, triggerAutoGreeting]);
 
   // Load generated resources on mount and on live changes
   useEffect(() => {
