@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ChevronRight,
   ChevronDown,
+  Download,
   Folder,
   FolderOpen,
   FileText,
@@ -21,6 +22,25 @@ interface Props {
 
 export default function FileBrowser({ files, onOpenFile }: Props) {
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+  const seenDirPaths = useRef<Set<string>>(new Set());
+
+  // Auto-expand directories the first time they appear (new dirs from watcher updates)
+  useEffect(() => {
+    setExpandedPaths(prev => {
+      const next = new Set(prev);
+      const collectDirs = (list: WorkspaceFile[]) => {
+        for (const f of list) {
+          if (f.isDirectory && !seenDirPaths.current.has(f.path)) {
+            next.add(f.path);
+            seenDirPaths.current.add(f.path);
+            if (f.children) collectDirs(f.children);
+          }
+        }
+      };
+      collectDirs(files);
+      return next;
+    });
+  }, [files]);
 
   const toggleExpanded = (filePath: string) => {
     setExpandedPaths((prev) => {
@@ -104,29 +124,43 @@ function FileNode({
 
   return (
     <div>
-      {isInteractive ? (
-        <button
-          onClick={() => {
-            if (file.isDirectory) onToggleExpanded(file.path);
-            else onOpenFile(file.path, file.name);
-          }}
-          className={`${baseClass} ${
-            file.isDirectory
-              ? "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
-              : "text-gray-500 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
-          }`}
-          style={indentStyle}
-        >
-          {innerContent}
-        </button>
-      ) : (
-        <div
-          className={`${baseClass} text-gray-400 dark:text-slate-500`}
-          style={indentStyle}
-        >
-          {innerContent}
-        </div>
-      )}
+      <div className="group relative">
+        {isInteractive ? (
+          <button
+            onClick={() => {
+              if (file.isDirectory) onToggleExpanded(file.path);
+              else onOpenFile(file.path, file.name);
+            }}
+            className={`${baseClass} ${
+              file.isDirectory
+                ? "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                : "text-gray-500 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 pr-6"
+            }`}
+            style={indentStyle}
+          >
+            {innerContent}
+          </button>
+        ) : (
+          <div
+            className={`${baseClass} text-gray-400 dark:text-slate-500 pr-6`}
+            style={indentStyle}
+          >
+            {innerContent}
+          </div>
+        )}
+        {!file.isDirectory && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              window.api.files.export([file.path]);
+            }}
+            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all"
+            title="Save to computer"
+          >
+            <Download size={11} />
+          </button>
+        )}
+      </div>
 
       {file.isDirectory && expanded && file.children?.map((child) => (
         <FileNode

@@ -43,10 +43,11 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
   const [outputFiles, setOutputFiles] = useState<WorkspaceFile[]>([]);
   const [showManageFiles, setShowManageFiles] = useState(false);
   const [showHowToUse, setShowHowToUse] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   // Load generated resources on mount and on live changes
   useEffect(() => {
-    window.api.output.listFiles().then(setOutputFiles);
+    window.api.output.listFiles().then(setOutputFiles).catch(console.error);
     return window.api.output.onFilesChanged(setOutputFiles);
   }, []);
 
@@ -60,15 +61,20 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
   };
 
   const handleResumeSession = async (sessionId: string) => {
-    const raw = await window.api.session.loadMessages(sessionId);
-    const messages: ChatMessage[] = raw.map((m, i) => ({
-      id: `resumed-${i}`,
-      role: m.role as "user" | "assistant",
-      content: m.content,
-      timestamp: 0,
-    }));
-    setSidebarTab("files");
-    chat.resumeSession(sessionId, messages);
+    try {
+      setResumeError(null);
+      const raw = await window.api.session.loadMessages(sessionId);
+      const messages: ChatMessage[] = raw.map((m, i) => ({
+        id: `resumed-${i}`,
+        role: m.role as "user" | "assistant",
+        content: m.content,
+        timestamp: 0,
+      }));
+      setSidebarTab("files");
+      chat.resumeSession(sessionId, messages);
+    } catch {
+      setResumeError("Failed to resume session. Please try again.");
+    }
   };
 
   const handleExportOutputs = async () => {
@@ -102,11 +108,10 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
           <button
             onClick={() => setSidebarTab("files")}
             data-testid="sidebar-files-tab"
-            className={`flex-1 py-2 text-xs font-medium transition-colors ${
-              sidebarTab === "files"
+            className={`flex-1 py-2 text-xs font-medium transition-colors ${sidebarTab === "files"
                 ? "text-blue-500 border-b-2 border-blue-500"
                 : "text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200"
-            }`}
+              }`}
           >
             Files
           </button>
@@ -116,11 +121,10 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
               refreshSessions();
             }}
             data-testid="sidebar-sessions-tab"
-            className={`flex-1 py-2 text-xs font-medium transition-colors ${
-              sidebarTab === "sessions"
+            className={`flex-1 py-2 text-xs font-medium transition-colors ${sidebarTab === "sessions"
                 ? "text-blue-500 border-b-2 border-blue-500"
                 : "text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200"
-            }`}
+              }`}
           >
             Sessions
           </button>
@@ -131,19 +135,10 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
           {sidebarTab === "files" ? (
             <div>
               {/* Generated Resources section header */}
-              <div className="px-3 pt-3 pb-1 flex items-center justify-between">
-                <p className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+              <div className="px-3 pt-3 pb-1">
+                <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
                   Generated Resources
                 </p>
-                {outputFiles.length > 0 && (
-                  <button
-                    onClick={handleExportOutputs}
-                    title="Export all generated resources"
-                    className="text-[10px] text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                  >
-                    Export ↓
-                  </button>
-                )}
               </div>
               {outputFiles.length > 0 ? (
                 <FileBrowser
@@ -155,14 +150,30 @@ export default function MainLayout({ workspacePath, onOpenSettings, onUpdateCont
                   No files yet — run a command to generate resources
                 </p>
               )}
+              {outputFiles.length > 0 && (
+                <div className="px-3 pb-3">
+                  <button
+                    onClick={handleExportOutputs}
+                    title="Export all generated resources"
+                    className="text-xs text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 rounded px-2 py-0.5 transition-colors"
+                  >
+                    Save to computer
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            <SessionList
-              sessions={sessions}
-              loading={sessionsLoading}
-              error={sessionsError}
-              onResume={handleResumeSession}
-            />
+            <>
+              {resumeError && (
+                <p className="px-3 pt-2 text-xs text-red-500 dark:text-red-400">{resumeError}</p>
+              )}
+              <SessionList
+                sessions={sessions}
+                loading={sessionsLoading}
+                error={sessionsError}
+                onResume={handleResumeSession}
+              />
+            </>
           )}
         </div>
 

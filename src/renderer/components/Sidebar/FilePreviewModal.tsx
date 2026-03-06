@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { X } from "lucide-react";
+import { Download, X } from "lucide-react";
 
 interface Props {
   filePath: string;
@@ -18,7 +18,7 @@ export default function FilePreviewModal({ filePath, fileName, onClose }: Props)
     setError(null);
     window.api.workspace.readFile(filePath)
       .then(setContent)
-      .catch((e: Error) => setError(e.message));
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to read file'));
   }, [filePath]);
 
   // Close on Escape
@@ -37,7 +37,7 @@ export default function FilePreviewModal({ filePath, fileName, onClose }: Props)
     >
       <div
         className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl flex flex-col"
-        style={{ width: 768, height: '80vh', minWidth: 320, minHeight: 200, resize: 'both', overflow: 'hidden' }}
+        style={{ width: 768, height: '80vh', minWidth: 320, minHeight: 200, resize: 'both', overflow: 'auto' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
@@ -45,8 +45,16 @@ export default function FilePreviewModal({ filePath, fileName, onClose }: Props)
             {fileName}
           </span>
           <button
+            onClick={() => window.api.files.export([filePath])}
+            className="ml-auto flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors"
+            title="Save to computer"
+          >
+            <Download size={13} />
+            Save
+          </button>
+          <button
             onClick={onClose}
-            className="ml-4 flex-shrink-0 p-1 rounded text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+            className="ml-2 flex-shrink-0 p-1 rounded text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
             title="Close (Esc)"
           >
             <X size={16} />

@@ -4,7 +4,7 @@
   "description": "Spurstate Workdesk — AI teaching assistant powered by Claude",
   "main": "out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "electron-vite dev -- --no-sandbox",
     "build": "electron-vite build && electron-builder",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:win": "electron-vite build && electron-builder --win",

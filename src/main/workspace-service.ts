@@ -108,8 +108,10 @@ export function startWatcher(
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
-      const files = listWorkspaceFiles(workspacePath);
-      win.webContents.send(WORKSPACE_EVENTS.FILES_CHANGED, files);
+      if (!win.isDestroyed()) {
+        const files = listWorkspaceFiles(workspacePath);
+        win.webContents.send(WORKSPACE_EVENTS.FILES_CHANGED, files);
+      }
     }, 300);
   };
 
@@ -217,8 +219,10 @@ export function startOutputWatcher(outputPath: string, win: BrowserWindow): void
     if (outputDebounceTimer) clearTimeout(outputDebounceTimer);
     outputDebounceTimer = setTimeout(() => {
       outputDebounceTimer = null;
-      const files = listWorkspaceFiles(outputPath, 0, 3);
-      win.webContents.send(OUTPUT_EVENTS.FILES_CHANGED, files);
+      if (!win.isDestroyed()) {
+        const files = listWorkspaceFiles(outputPath, 0, 3);
+        win.webContents.send(OUTPUT_EVENTS.FILES_CHANGED, files);
+      }
     }, 300);
   };
 

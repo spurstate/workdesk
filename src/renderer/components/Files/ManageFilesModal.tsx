@@ -17,6 +17,7 @@ export default function ManageFilesModal({ workspacePath: _workspacePath, onClos
   const [curriculumFiles, setCurriculumFiles] = useState<WorkspaceFile[]>([]);
   const [previewContent, setPreviewContent] = useState<{ name: string; content: string } | null>(null);
   const [importing, setImporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadContextFiles();
@@ -32,17 +33,18 @@ export default function ManageFilesModal({ workspacePath: _workspacePath, onClos
         else if (!f.isDirectory) flat.push(f);
       }
       setContextFiles(flat);
-    });
+    }).catch(() => setError("Failed to load context files."));
 
   const loadCurriculumFiles = () =>
-    window.api.curriculum.listFiles().then(setCurriculumFiles);
+    window.api.curriculum.listFiles().then(setCurriculumFiles)
+      .catch(() => setError("Failed to load curriculum files."));
 
   const handlePreview = async (file: WorkspaceFile) => {
     try {
       const content = await window.api.workspace.readFile(file.path);
       setPreviewContent({ name: file.name, content });
     } catch {
-      // ignore preview errors
+      setError("Could not load preview.");
     }
   };
 
@@ -63,8 +65,12 @@ export default function ManageFilesModal({ workspacePath: _workspacePath, onClos
   };
 
   const handleDeleteCurriculum = async (file: WorkspaceFile) => {
-    await window.api.curriculum.deleteFile(file.path);
-    await loadCurriculumFiles();
+    try {
+      await window.api.curriculum.deleteFile(file.path);
+      await loadCurriculumFiles();
+    } catch {
+      setError("Failed to delete file.");
+    }
   };
 
   const handleExportCurriculum = async () => {
@@ -77,10 +83,10 @@ export default function ManageFilesModal({ workspacePath: _workspacePath, onClos
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div
         className="bg-white dark:bg-slate-900 rounded-2xl text-gray-900 dark:text-white flex flex-col"
-        style={{ width: 520, height: '70vh', minWidth: 360, minHeight: 300, resize: 'both', overflow: 'hidden' }}
+        style={{ width: 520, height: '70vh', minWidth: 360, minHeight: 300, resize: 'both', overflow: 'auto' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
           <h2 className="text-base font-semibold">Manage Files</h2>
           <button
             onClick={onClose}
@@ -91,11 +97,11 @@ export default function ManageFilesModal({ workspacePath: _workspacePath, onClos
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-slate-700">
+        <div className="flex border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
           {(["context", "curriculum"] as Tab[]).map((t) => (
             <button
               key={t}
-              onClick={() => { setTab(t); setPreviewContent(null); }}
+              onClick={() => { setTab(t); setPreviewContent(null); setError(null); }}
               className={`flex-1 py-2.5 text-xs font-medium transition-colors capitalize ${
                 tab === t
                   ? "text-blue-500 border-b-2 border-blue-500"
@@ -106,6 +112,14 @@ export default function ManageFilesModal({ workspacePath: _workspacePath, onClos
             </button>
           ))}
         </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="px-4 py-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 flex items-center justify-between flex-shrink-0">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="ml-2 text-red-400 hover:text-red-600">✕</button>
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto">
@@ -182,7 +196,7 @@ export default function ManageFilesModal({ workspacePath: _workspacePath, onClos
 
         {/* Footer actions */}
         {!previewContent && (
-          <div className="px-4 py-3 border-t border-gray-200 dark:border-slate-700 flex gap-2">
+          <div className="px-4 py-3 border-t border-gray-200 dark:border-slate-700 flex gap-2 flex-shrink-0">
             {tab === "context" ? (
               <button
                 onClick={handleExportContext}
