@@ -190,6 +190,7 @@ export default function MainLayout({ workspacePath, hasKey, onOpenSettings, onUp
         <div className="p-3 border-t border-gray-200 dark:border-slate-700 space-y-1">
           <button
             onClick={() => setShowHowToUse(true)}
+            title="How to use"
             className="w-full text-xs text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 py-1 text-left"
           >
             📖 How to Use

@@ -90,6 +90,8 @@ export default function ManageFilesModal({ workspacePath: _workspacePath, onClos
           <h2 className="text-base font-semibold">Manage Files</h2>
           <button
             onClick={onClose}
+            title="Close"
+            aria-label="Close"
             className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
           >
             <X size={16} />
