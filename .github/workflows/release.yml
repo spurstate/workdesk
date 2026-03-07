@@ -38,7 +38,6 @@ jobs:
       - name: Build macOS
         run: npm run build:mac
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           VITE_SUBSCRIPTION_KEY_WEBHOOK_URL: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_URL }}
           VITE_SUBSCRIPTION_KEY_WEBHOOK_TOKEN: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_TOKEN }}
@@ -73,7 +72,6 @@ jobs:
       - name: Build Windows
         run: npm run build:win
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           VITE_SUBSCRIPTION_KEY_WEBHOOK_URL: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_URL }}
           VITE_SUBSCRIPTION_KEY_WEBHOOK_TOKEN: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_TOKEN }}
