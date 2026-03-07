@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Mock config-service dependencies
 const mockGetSubscriptionKey = vi.fn<() => string | null>()
@@ -63,6 +63,7 @@ describe('checkSubscriptionKeyOnStartup', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers()
     vi.setSystemTime(NOW)
     vi.stubGlobal('fetch', vi.fn())
   })
