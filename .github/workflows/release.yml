@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
       - name: Build macOS
-        run: npm run build:mac
+        run: npx electron-vite build && npx electron-builder --mac --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
           VITE_SUBSCRIPTION_KEY_WEBHOOK_URL: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_URL }}
@@ -70,7 +70,7 @@ jobs:
         run: npm ci
 
       - name: Build Windows
-        run: npm run build:win
+        run: npx electron-vite build && npx electron-builder --win --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
           VITE_SUBSCRIPTION_KEY_WEBHOOK_URL: ${{ secrets.VITE_SUBSCRIPTION_KEY_WEBHOOK_URL }}
