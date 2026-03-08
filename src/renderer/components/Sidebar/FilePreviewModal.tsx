@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Download, X } from "lucide-react";
@@ -12,6 +12,7 @@ interface Props {
 export default function FilePreviewModal({ filePath, fileName, onClose }: Props) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const mouseDownOnBackdrop = useRef(false);
 
   useEffect(() => {
     setContent(null);
@@ -33,7 +34,8 @@ export default function FilePreviewModal({ filePath, fileName, onClose }: Props)
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-6"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onMouseDown={(e) => { mouseDownOnBackdrop.current = e.target === e.currentTarget; }}
+      onClick={(e) => { if (e.target === e.currentTarget && mouseDownOnBackdrop.current) onClose(); }}
     >
       <div
         className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl flex flex-col"

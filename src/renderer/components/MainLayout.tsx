@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Sun, Moon } from "lucide-react";
 import logoSrc from "../assets/logo.png";
 import { useChat } from "../hooks/useChat";
@@ -59,6 +59,15 @@ export default function MainLayout({ workspacePath, hasKey, onOpenSettings, onUp
     window.api.output.listFiles().then(setOutputFiles).catch(console.error);
     return window.api.output.onFilesChanged(setOutputFiles);
   }, []);
+
+  // Explicitly refresh output files when generation completes
+  const wasStreamingRef = useRef(false);
+  useEffect(() => {
+    if (wasStreamingRef.current && !chat.isStreaming) {
+      window.api.output.listFiles().then(setOutputFiles).catch(console.error);
+    }
+    wasStreamingRef.current = chat.isStreaming;
+  }, [chat.isStreaming]);
 
   const handleSendMessage = async (message: string) => {
     await chat.sendMessage(message);
@@ -153,6 +162,7 @@ export default function MainLayout({ workspacePath, hasKey, onOpenSettings, onUp
                 <FileBrowser
                   files={outputFiles}
                   onOpenFile={(path, name) => setPreviewFile({ path, name })}
+                  onDeleteFile={(path) => window.api.output.deleteFile(path).then(() => window.api.output.listFiles().then(setOutputFiles)).catch(console.error)}
                 />
               ) : (
                 <p className="px-3 pb-2 text-xs text-gray-400 dark:text-slate-500">

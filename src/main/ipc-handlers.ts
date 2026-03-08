@@ -55,6 +55,10 @@ export function registerIpcHandlers(win: BrowserWindow, templatePath: string): v
     return listWorkspaceFiles(path.join(wp(), "outputs"), 0, 3);
   });
 
+  ipcMain.handle(IPC.OUTPUT_DELETE_FILE, (_event, filePath: string) => {
+    deleteCurriculumFile(filePath);
+  });
+
   // ── Workspace ────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.WORKSPACE_GET_CURRENT, () => wp());
 

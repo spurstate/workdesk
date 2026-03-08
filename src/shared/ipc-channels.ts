@@ -9,6 +9,7 @@ export const IPC = {
 
   // Generated resources (outputs)
   OUTPUT_LIST_FILES: "output:list-files",
+  OUTPUT_DELETE_FILE: "output:delete-file",
 
   // Workspace
   WORKSPACE_GET_CURRENT: "workspace:get-current",

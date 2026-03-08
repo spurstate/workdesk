@@ -101,8 +101,8 @@ const LEARNING_AREAS = [
   "Languages",
 ];
 
-const labelClass = "block text-xs text-slate-400 mb-1";
+const labelClass = "block text-xs text-gray-500 dark:text-slate-400 mb-1";
 const inputClass =
-  "w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500";
+  "w-full bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500";
 const submitClass =
   "px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-colors";

@@ -21,6 +21,8 @@ const api = {
   output: {
     listFiles: (): Promise<WorkspaceFile[]> =>
       ipcRenderer.invoke(IPC.OUTPUT_LIST_FILES),
+    deleteFile: (filePath: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.OUTPUT_DELETE_FILE, filePath),
     onFilesChanged: (cb: (files: WorkspaceFile[]) => void): (() => void) => {
       const handler = (_: unknown, files: WorkspaceFile[]) => cb(files);
       ipcRenderer.on(OUTPUT_EVENTS.FILES_CHANGED, handler);

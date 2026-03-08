@@ -3,6 +3,7 @@ import {
   ChevronRight,
   ChevronDown,
   Download,
+  Trash2,
   Folder,
   FolderOpen,
   FileText,
@@ -18,9 +19,10 @@ import type { WorkspaceFile } from "../../../shared/types";
 interface Props {
   files: WorkspaceFile[];
   onOpenFile: (path: string, name: string) => void;
+  onDeleteFile: (path: string) => void;
 }
 
-export default function FileBrowser({ files, onOpenFile }: Props) {
+export default function FileBrowser({ files, onOpenFile, onDeleteFile }: Props) {
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
   const seenDirPaths = useRef<Set<string>>(new Set());
 
@@ -64,6 +66,7 @@ export default function FileBrowser({ files, onOpenFile }: Props) {
           file={file}
           depth={0}
           onOpenFile={onOpenFile}
+          onDeleteFile={onDeleteFile}
           expandedPaths={expandedPaths}
           onToggleExpanded={toggleExpanded}
         />
@@ -76,12 +79,14 @@ function FileNode({
   file,
   depth,
   onOpenFile,
+  onDeleteFile,
   expandedPaths,
   onToggleExpanded,
 }: {
   file: WorkspaceFile;
   depth: number;
   onOpenFile: (path: string, name: string) => void;
+  onDeleteFile: (path: string) => void;
   expandedPaths: Set<string>;
   onToggleExpanded: (filePath: string) => void;
 }) {
@@ -149,16 +154,30 @@ function FileNode({
           </div>
         )}
         {!file.isDirectory && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              window.api.files.export([file.path]);
-            }}
-            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all"
-            title="Save to computer"
-          >
-            <Download size={11} />
-          </button>
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.api.files.export([file.path]);
+              }}
+              className="p-1 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
+              title="Save to computer"
+            >
+              <Download size={11} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm(`Delete "${file.name}"? This cannot be undone.`)) {
+                  onDeleteFile(file.path);
+                }
+              }}
+              className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+              title="Delete file"
+            >
+              <Trash2 size={11} />
+            </button>
+          </div>
         )}
       </div>
 
@@ -168,6 +187,7 @@ function FileNode({
           file={child}
           depth={depth + 1}
           onOpenFile={onOpenFile}
+          onDeleteFile={onDeleteFile}
           expandedPaths={expandedPaths}
           onToggleExpanded={onToggleExpanded}
         />
