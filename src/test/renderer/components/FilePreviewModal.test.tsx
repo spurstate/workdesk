@@ -48,14 +48,16 @@ describe('FilePreviewModal', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('calls onClose when backdrop is clicked', async () => {
+  it('calls onClose when backdrop is clicked (mousedown then click on backdrop)', async () => {
     const onClose = vi.fn()
     mockWindowApi.workspace.readFile.mockResolvedValue('content')
     const { container } = render(
       <FilePreviewModal filePath="/ws/file.md" fileName="file.md" onClose={onClose} />
     )
-    // Click the backdrop (outermost div)
-    fireEvent.click(container.firstChild as HTMLElement)
+    // Both mousedown and click must originate on the backdrop for it to close
+    const backdrop = container.firstChild as HTMLElement
+    fireEvent.mouseDown(backdrop)
+    fireEvent.click(backdrop)
     expect(onClose).toHaveBeenCalled()
   })
 })
